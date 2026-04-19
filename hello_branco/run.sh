@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-echo "Hello Branco 🚀"
+echo "Starting OLED..."
 
-while true; do
-  sleep 60
-done
+python3 /app/main.py
