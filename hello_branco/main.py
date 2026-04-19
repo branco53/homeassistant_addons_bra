@@ -9,6 +9,8 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
+import subprocess
+
 import time
 import socket
 import psutil
@@ -32,6 +34,36 @@ except:
 def center_text(draw, text, y, font):
     w, h = draw.textbbox((0, 0), text, font=font)[2:]
     draw.text(((128 - w) // 2, y), text, font=font, fill=255)
+
+def get_wifi_signal():
+    try:
+        output = subprocess.check_output("iw dev wlan0 link", shell=True).decode()
+
+        for line in output.split("\n"):
+            if "signal" in line:
+                # example: signal: -55 dBm
+                dbm = int(line.split("signal:")[1].split("dBm")[0].strip())
+                
+                # convert dBm to percentage (approx)
+                percent = min(max(2 * (dbm + 100), 0), 100)
+                return percent, f"{dbm} dBm"
+
+        return 0, "no signal"
+    except:
+        return 0, "no wifi"
+
+def get_uptime():
+    try:
+        with open("/proc/uptime") as f:
+            seconds = int(float(f.read().split()[0]))
+
+        days = seconds // 86400
+        hours = (seconds % 86400) // 3600
+        minutes = (seconds % 3600) // 60
+
+        return f"{days}d {hours}h {minutes}m"
+    except:
+        return "N/A"
 
 def get_host():
     try:
@@ -122,6 +154,34 @@ while True:
     
     center_text(draw, host, 18, font_big)
     center_text(draw, ip, 42, font_small)
+    
+    device.display(image)
+    time.sleep(6)
+
+    # ===== PAGE 4: WiFi =====    
+    image = Image.new("1", (128, 64))
+    draw = ImageDraw.Draw(image)
+    
+    center_text(draw, "WiFi", 0, font_small)
+    
+    wifi_percent, wifi_text = get_wifi_signal()
+    
+    center_text(draw, wifi_text, 18, font_small)
+    
+    draw_bar(draw, 6, 40, 116, 10, wifi_percent)
+    
+    device.display(image)
+    time.sleep(6)
+
+    # ===== PAGE 5: Uptime ===== 
+    image = Image.new("1", (128, 64))
+    draw = ImageDraw.Draw(image)
+    
+    center_text(draw, "Uptime", 0, font_small)
+    
+    uptime = get_uptime()
+    
+    center_text(draw, uptime, 28, font_big)
     
     device.display(image)
     time.sleep(6)
