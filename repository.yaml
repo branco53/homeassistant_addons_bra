@@ -1,4 +1,3 @@
-# https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
-name: Branco test homeassistant Add-ons
-url: 'https://github.com/branco53/homeassistant_addons_bra'
-maintainer: Branco sossa<branco.sossa@gmail.com>
+name: "Branco Add-ons"
+url: "https://github.com/branco53/homeassistant_addons_bra"
+maintainer: "branco53"
