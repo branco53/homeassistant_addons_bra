@@ -10,6 +10,7 @@ RUN apk add --no-cache \
 RUN pip install luma.oled pillow smbus2 psutil
 RUN apk add --no-cache font-dejavu
 RUN pip install requests
+RUN apk add --no-cache iw
 
 COPY . /app
 WORKDIR /app
