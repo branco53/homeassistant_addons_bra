@@ -7,7 +7,7 @@ RUN apk add --no-cache \
     linux-headers \
     python3-dev
 
-RUN pip install luma.oled pillow smbus2
+RUN pip install luma.oled pillow smbus2 psutil
 
 COPY . /app
 WORKDIR /app
