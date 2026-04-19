@@ -1,31 +1,54 @@
+import time
+import socket
+import psutil
 from luma.core.interface.serial import i2c
 from luma.oled.device import ssd1306
 from PIL import Image, ImageDraw, ImageFont
-import time
 
-# Initialize I2C (usually address 0x3C)
+# OLED setup
 serial = i2c(port=1, address=0x3C)
-
-# IMPORTANT: 128x64 display
 device = ssd1306(serial, width=128, height=64)
 
-# Create image buffer
-image = Image.new("1", (device.width, device.height))
-draw = ImageDraw.Draw(image)
-
-# Clear screen
-draw.rectangle((0, 0, 128, 64), outline=0, fill=0)
-
-# Load default font
 font = ImageFont.load_default()
 
-# Write text
-draw.text((0, 0), "Hello Branco!", font=font, fill=255)
-draw.text((0, 20), "128x64 OK", font=font, fill=255)
+def get_ip():
+    try:
+        return socket.gethostbyname(socket.gethostname())
+    except:
+        return "No IP"
 
-# Display
-device.display(image)
+def get_temp():
+    try:
+        # Raspberry Pi typical path
+        with open("/sys/class/thermal/thermal_zone0/temp") as f:
+            temp = int(f.read()) / 1000
+            return f"{temp:.1f}C"
+    except:
+        return "N/A"
 
-# Keep running
 while True:
-    time.sleep(60)
+    # Create image
+    image = Image.new("1", (128, 64))
+    draw = ImageDraw.Draw(image)
+
+    # System data
+    cpu = psutil.cpu_percent()
+    ram = psutil.virtual_memory().percent
+    disk = psutil.disk_usage('/').percent
+    ip = get_ip()
+    temp = get_temp()
+    host = socket.gethostname()
+
+    # Draw text (6 lines max)
+    draw.text((0, 0), f"{host}", font=font, fill=255)
+    draw.text((0, 10), f"CPU: {cpu}%", font=font, fill=255)
+    draw.text((0, 20), f"TEMP: {temp}", font=font, fill=255)
+    draw.text((0, 30), f"RAM: {ram}%", font=font, fill=255)
+    draw.text((0, 40), f"DSK: {disk}%", font=font, fill=255)
+    draw.text((0, 50), f"IP: {ip}", font=font, fill=255)
+
+    # Display
+    device.display(image)
+
+    # Refresh every 2 sec (10 cycles ≈ 20 sec)
+    time.sleep(2)
