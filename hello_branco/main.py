@@ -13,42 +13,76 @@ font = ImageFont.load_default()
 
 def get_ip():
     try:
-        return socket.gethostbyname(socket.gethostname())
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
     except:
         return "No IP"
 
 def get_temp():
     try:
-        # Raspberry Pi typical path
         with open("/sys/class/thermal/thermal_zone0/temp") as f:
-            temp = int(f.read()) / 1000
-            return f"{temp:.1f}C"
+            return int(f.read()) / 1000
     except:
-        return "N/A"
+        return 0
+
+def draw_bar(draw, x, y, width, height, percent):
+    filled = int((percent / 100.0) * width)
+    draw.rectangle((x, y, x + width, y + height), outline=255, fill=0)
+    draw.rectangle((x, y, x + filled, y + height), outline=255, fill=255)
 
 while True:
-    # Create image
-    image = Image.new("1", (128, 64))
-    draw = ImageDraw.Draw(image)
-
-    # System data
+    # SYSTEM DATA
     cpu = psutil.cpu_percent()
     ram = psutil.virtual_memory().percent
     disk = psutil.disk_usage('/').percent
-    ip = get_ip()
     temp = get_temp()
+    ip = get_ip()
     host = socket.gethostname()
 
-    # Draw text (6 lines max)
-    draw.text((0, 0), f"{host}", font=font, fill=255)
-    draw.text((0, 10), f"CPU: {cpu}%", font=font, fill=255)
-    draw.text((0, 20), f"TEMP: {temp}", font=font, fill=255)
-    draw.text((0, 30), f"RAM: {ram}%", font=font, fill=255)
-    draw.text((0, 40), f"DSK: {disk}%", font=font, fill=255)
-    draw.text((0, 50), f"IP: {ip}", font=font, fill=255)
+    # -------- PAGE 1: CPU + TEMP --------
+    image = Image.new("1", (128, 64))
+    draw = ImageDraw.Draw(image)
 
-    # Display
+    draw.text((0, 0), "CPU & TEMP", font=font, fill=255)
+
+    draw.text((0, 12), f"CPU: {cpu:.0f}%", font=font, fill=255)
+    draw_bar(draw, 0, 22, 120, 8, cpu)
+
+    draw.text((0, 36), f"TEMP: {temp:.1f}C", font=font, fill=255)
+    
+    # Map temp to % (0–100C → 0–100%)
+    temp_percent = min(max(temp, 0), 100)
+    draw_bar(draw, 0, 46, 120, 8, temp_percent)
+
     device.display(image)
+    time.sleep(6)
 
-    # Refresh every 2 sec (10 cycles ≈ 20 sec)
-    time.sleep(2)
+    # -------- PAGE 2: RAM + DISK --------
+    image = Image.new("1", (128, 64))
+    draw = ImageDraw.Draw(image)
+
+    draw.text((0, 0), "MEMORY", font=font, fill=255)
+
+    draw.text((0, 12), f"RAM: {ram:.0f}%", font=font, fill=255)
+    draw_bar(draw, 0, 22, 120, 8, ram)
+
+    draw.text((0, 36), f"DSK: {disk:.0f}%", font=font, fill=255)
+    draw_bar(draw, 0, 46, 120, 8, disk)
+
+    device.display(image)
+    time.sleep(6)
+
+    # -------- PAGE 3: HOST + IP --------
+    image = Image.new("1", (128, 64))
+    draw = ImageDraw.Draw(image)
+
+    draw.text((0, 0), "NETWORK", font=font, fill=255)
+
+    draw.text((0, 16), f"{host}", font=font, fill=255)
+    draw.text((0, 32), f"{ip}", font=font, fill=255)
+
+    device.display(image)
+    time.sleep(6)
