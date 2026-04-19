@@ -1,6 +1,8 @@
-FROM ghcr.io/home-assistant/aarch64-base:3.19
+FROM python:3.11-alpine
 
 RUN apk add --no-cache bash
 
-COPY run.sh /etc/services.d/hello/run
-RUN chmod +x /etc/services.d/hello/run
+COPY run.sh /run.sh
+RUN chmod +x /run.sh
+
+CMD ["/run.sh"]
