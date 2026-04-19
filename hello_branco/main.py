@@ -1,9 +1,16 @@
+
+import os
+
+SUPERVISOR_TOKEN = os.environ.get("SUPERVISOR_TOKEN")
+HEADERS = {"Authorization": f"Bearer {SUPERVISOR_TOKEN}"}
+
 import time
 import socket
 import psutil
 from luma.core.interface.serial import i2c
 from luma.oled.device import ssd1306
 from PIL import Image, ImageDraw, ImageFont
+
 
 # OLED setup
 serial = i2c(port=1, address=0x3C)
@@ -21,37 +28,24 @@ def center_text(draw, text, y, font):
     w, h = draw.textbbox((0, 0), text, font=font)[2:]
     draw.text(((128 - w) // 2, y), text, font=font, fill=255)
 
-#def get_ip():
-#    try:
-#        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#        s.connect(("8.8.8.8", 80))
-#        ip = s.getsockname()[0]
-#        s.close()
-#        return ip
-#    except:
-#        return "No IP"
+def get_host():
+    try:
+        r = requests.get("http://supervisor/host/info", headers=HEADERS)
+        return r.json()["data"]["hostname"]
+    except:
+        return "unknown"
+
 
 def get_ip():
     try:
-        import subprocess
-        ip = subprocess.check_output("hostname -I", shell=True).decode().split()[0]
-        return ip
+        r = requests.get("http://supervisor/network/info", headers=HEADERS)
+        interfaces = r.json()["data"]["interfaces"]
+        for i in interfaces:
+            if i["ipv4"]["address"]:
+                return i["ipv4"]["address"][0].split("/")[0]
+        return "0.0.0.0"
     except:
-        return "No IP"
-        
-#def get_host():
-#    try:
-#        import subprocess
-#        return subprocess.check_output("hostname", shell=True).decode().strip()
-#    except:
-#        return "unknown"
-        
-def get_host():
-    try:
-        with open("/etc/hostname") as f:
-            return f.read().strip()
-    except:
-        return "unknown"
+        return "no ip"
         
 def get_temp():
     try:
