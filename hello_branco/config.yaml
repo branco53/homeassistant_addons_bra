@@ -1,20 +1,15 @@
 name: "Hello Branco"
-version: "1.0.5"
+version: "1.0.6"
 slug: "hello_branco"
 description: "Test add-on"
-startup: "services"
-boot: "auto"
+
+startup: services
+boot: auto
+
+init: false   # 🔥 disables s6 completely
 
 arch:
   - aarch64
-  - armv7
-  - amd64
-
-# 🔥 THIS PART FIXES BUILD_FROM
-build:
-  aarch64: ghcr.io/home-assistant/aarch64-base:3.19
-  armv7: ghcr.io/home-assistant/armv7-base:3.19
-  amd64: ghcr.io/home-assistant/amd64-base:3.19
 
 options: {}
 schema: {}
