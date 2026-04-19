@@ -9,7 +9,17 @@ from PIL import Image, ImageDraw, ImageFont
 serial = i2c(port=1, address=0x3C)
 device = ssd1306(serial, width=128, height=64)
 
-font = ImageFont.load_default()
+# Fonts
+font_small = ImageFont.load_default()
+try:
+    font_big = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
+except:
+    font_big = font_small
+
+# Helpers
+def center_text(draw, text, y, font):
+    w, h = draw.textbbox((0, 0), text, font=font)[2:]
+    draw.text(((128 - w) // 2, y), text, font=font, fill=255)
 
 def get_ip():
     try:
@@ -29,12 +39,14 @@ def get_temp():
         return 0
 
 def draw_bar(draw, x, y, width, height, percent):
-    filled = int((percent / 100.0) * width)
+    # outline
     draw.rectangle((x, y, x + width, y + height), outline=255, fill=0)
-    draw.rectangle((x, y, x + filled, y + height), outline=255, fill=255)
+    # fill
+    filled = int((percent / 100.0) * (width - 2))
+    draw.rectangle((x + 1, y + 1, x + 1 + filled, y + height - 1), fill=255)
 
+# Main loop
 while True:
-    # SYSTEM DATA
     cpu = psutil.cpu_percent()
     ram = psutil.virtual_memory().percent
     disk = psutil.disk_usage('/').percent
@@ -42,47 +54,53 @@ while True:
     ip = get_ip()
     host = socket.gethostname()
 
-    # -------- PAGE 1: CPU + TEMP --------
+    # ===== PAGE 1: CPU + TEMP =====
     image = Image.new("1", (128, 64))
     draw = ImageDraw.Draw(image)
 
-    draw.text((0, 0), "CPU & TEMP", font=font, fill=255)
+    center_text(draw, "SYSTEM", 0, font_small)
 
-    draw.text((0, 12), f"CPU: {cpu:.0f}%", font=font, fill=255)
-    draw_bar(draw, 0, 22, 120, 8, cpu)
+    # CPU
+    draw.text((4, 14), "CPU", font=font_small, fill=255)
+    draw.text((90, 14), f"{cpu:.0f}%", font=font_small, fill=255)
+    draw_bar(draw, 4, 24, 120, 8, cpu)
 
-    draw.text((0, 36), f"TEMP: {temp:.1f}C", font=font, fill=255)
-    
-    # Map temp to % (0–100C → 0–100%)
+    # TEMP
+    draw.text((4, 38), "TEMP", font=font_small, fill=255)
+    draw.text((80, 38), f"{temp:.1f}C", font=font_small, fill=255)
     temp_percent = min(max(temp, 0), 100)
-    draw_bar(draw, 0, 46, 120, 8, temp_percent)
+    draw_bar(draw, 4, 48, 120, 8, temp_percent)
 
     device.display(image)
     time.sleep(6)
 
-    # -------- PAGE 2: RAM + DISK --------
+    # ===== PAGE 2: MEMORY =====
     image = Image.new("1", (128, 64))
     draw = ImageDraw.Draw(image)
 
-    draw.text((0, 0), "MEMORY", font=font, fill=255)
+    center_text(draw, "MEMORY", 0, font_small)
 
-    draw.text((0, 12), f"RAM: {ram:.0f}%", font=font, fill=255)
-    draw_bar(draw, 0, 22, 120, 8, ram)
+    # RAM
+    draw.text((4, 14), "RAM", font=font_small, fill=255)
+    draw.text((90, 14), f"{ram:.0f}%", font=font_small, fill=255)
+    draw_bar(draw, 4, 24, 120, 8, ram)
 
-    draw.text((0, 36), f"DSK: {disk:.0f}%", font=font, fill=255)
-    draw_bar(draw, 0, 46, 120, 8, disk)
+    # DISK
+    draw.text((4, 38), "DISK", font=font_small, fill=255)
+    draw.text((90, 38), f"{disk:.0f}%", font=font_small, fill=255)
+    draw_bar(draw, 4, 48, 120, 8, disk)
 
     device.display(image)
     time.sleep(6)
 
-    # -------- PAGE 3: HOST + IP --------
+    # ===== PAGE 3: NETWORK =====
     image = Image.new("1", (128, 64))
     draw = ImageDraw.Draw(image)
 
-    draw.text((0, 0), "NETWORK", font=font, fill=255)
+    center_text(draw, "NETWORK", 0, font_small)
 
-    draw.text((0, 16), f"{host}", font=font, fill=255)
-    draw.text((0, 32), f"{ip}", font=font, fill=255)
+    center_text(draw, host, 18, font_big)
+    center_text(draw, ip, 40, font_small)
 
     device.display(image)
     time.sleep(6)
