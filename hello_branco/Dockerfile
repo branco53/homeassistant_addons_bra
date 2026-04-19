@@ -1,8 +1,17 @@
 FROM python:3.11-alpine
 
-RUN apk add --no-cache bash
+RUN apk add --no-cache \
+    bash \
+    gcc \
+    musl-dev \
+    linux-headers \
+    python3-dev
 
-COPY run.sh /run.sh
-RUN chmod +x /run.sh
+RUN pip install luma.oled pillow smbus2
 
-CMD ["/run.sh"]
+COPY . /app
+WORKDIR /app
+
+RUN chmod +x /app/run.sh
+
+CMD ["/app/run.sh"]
