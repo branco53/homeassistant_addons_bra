@@ -8,6 +8,7 @@ RUN apk add --no-cache \
     python3-dev
 
 RUN pip install luma.oled pillow smbus2 psutil
+RUN apk add --no-cache font-dejavu
 
 COPY . /app
 WORKDIR /app
