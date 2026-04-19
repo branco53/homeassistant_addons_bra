@@ -10,6 +10,12 @@ init: false            # disable s6
 
 arch:
   - aarch64
+  
+devices:
+  - /dev/i2c-1
+
+privileged:
+  - SYS_RAWIO
 
 options: {}
 schema: {}
