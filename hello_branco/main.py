@@ -21,16 +21,38 @@ def center_text(draw, text, y, font):
     w, h = draw.textbbox((0, 0), text, font=font)[2:]
     draw.text(((128 - w) // 2, y), text, font=font, fill=255)
 
+#def get_ip():
+#    try:
+#        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#        s.connect(("8.8.8.8", 80))
+#        ip = s.getsockname()[0]
+#        s.close()
+#        return ip
+#    except:
+#        return "No IP"
+
 def get_ip():
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
+        import subprocess
+        ip = subprocess.check_output("hostname -I", shell=True).decode().split()[0]
         return ip
     except:
         return "No IP"
-
+        
+#def get_host():
+#    try:
+#        import subprocess
+#        return subprocess.check_output("hostname", shell=True).decode().strip()
+#    except:
+#        return "unknown"
+        
+def get_host():
+    try:
+        with open("/etc/hostname") as f:
+            return f.read().strip()
+    except:
+        return "unknown"
+        
 def get_temp():
     try:
         with open("/sys/class/thermal/thermal_zone0/temp") as f:
@@ -52,13 +74,14 @@ while True:
     disk = psutil.disk_usage('/').percent
     temp = get_temp()
     ip = get_ip()
-    host = socket.gethostname()
+   # host = socket.gethostname()
+    host = get_host()
 
     # ===== PAGE 1: CPU + TEMP =====
     image = Image.new("1", (128, 64))
     draw = ImageDraw.Draw(image)
 
-    center_text(draw, "SYSTEM", 0, font_small)
+    center_text(draw, "System", 0, font_small)
 
     # CPU
     draw.text((4, 14), "CPU", font=font_small, fill=255)
@@ -78,7 +101,7 @@ while True:
     image = Image.new("1", (128, 64))
     draw = ImageDraw.Draw(image)
 
-    center_text(draw, "MEMORY", 0, font_small)
+    center_text(draw, "Memory", 0, font_small)
 
     # RAM
     draw.text((4, 14), "RAM", font=font_small, fill=255)
@@ -97,7 +120,7 @@ while True:
     image = Image.new("1", (128, 64))
     draw = ImageDraw.Draw(image)
 
-    center_text(draw, "NETWORK", 0, font_small)
+    center_text(draw, "Network", 0, font_small)
 
     center_text(draw, host, 18, font_big)
     center_text(draw, ip, 40, font_small)
