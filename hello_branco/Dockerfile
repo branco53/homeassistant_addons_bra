@@ -5,4 +5,4 @@ RUN apk add --no-cache python3
 COPY run.sh /run.sh
 RUN chmod a+x /run.sh
 
-CMD [ "/run.sh" ]
+CMD [ "/usr/bin/with-contenv", "bash", "/run.sh" ]
