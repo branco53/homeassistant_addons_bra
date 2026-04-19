@@ -1,8 +1,13 @@
 
 import os
+import requests
 
 SUPERVISOR_TOKEN = os.environ.get("SUPERVISOR_TOKEN")
-HEADERS = {"Authorization": f"Bearer {SUPERVISOR_TOKEN}"}
+
+HEADERS = {
+    "Authorization": f"Bearer {SUPERVISOR_TOKEN}",
+    "Content-Type": "application/json",
+}
 
 import time
 import socket
@@ -32,20 +37,24 @@ def get_host():
     try:
         r = requests.get("http://supervisor/host/info", headers=HEADERS)
         return r.json()["data"]["hostname"]
-    except:
-        return "unknown"
+    except Exception as e:
+        return "no-host"
 
 
 def get_ip():
     try:
         r = requests.get("http://supervisor/network/info", headers=HEADERS)
         interfaces = r.json()["data"]["interfaces"]
-        for i in interfaces:
-            if i["ipv4"]["address"]:
-                return i["ipv4"]["address"][0].split("/")[0]
+
+        for iface in interfaces:
+            ipv4 = iface.get("ipv4", {})
+            addr = ipv4.get("address")
+            if addr:
+                return addr[0].split("/")[0]
+
         return "0.0.0.0"
-    except:
-        return "no ip"
+    except Exception as e:
+        return "no-ip"
         
 def get_temp():
     try:
@@ -58,11 +67,11 @@ def draw_metric(draw, label, value, percent, y):
     # Label (left)
     draw.text((6, y), label, font=font_small, fill=255)
 
-    # Value (right)
-    draw.text((98, y), value, font=font_small, fill=255)
+    # Value (right aligned better)
+    draw.text((88, y), value, font=font_small, fill=255)
 
-    # Bar BELOW with spacing
-    draw_bar(draw, 6, y + 10, 116, 6, percent)
+    # MORE SPACE before bar (was +10 → now +14)
+    draw_bar(draw, 6, y + 14, 116, 6, percent)
 
 def draw_bar(draw, x, y, width, height, percent):
     # outline
@@ -85,9 +94,9 @@ while True:
     image = Image.new("1", (128, 64))
     draw = ImageDraw.Draw(image)
     
-    center_text(draw, "SYSTEM", 0, font_small)
+    center_text(draw, "System", 0, font_small)
     
-    draw_metric(draw, "CPU", f"{cpu:.0f}%", cpu, 12)
+    draw_metric(draw, "CPU", f"{cpu:.0f}%", cpu, 10)
     draw_metric(draw, "TEMP", f"{temp:.1f}C", temp, 34)
     
     device.display(image)
@@ -97,9 +106,9 @@ while True:
     image = Image.new("1", (128, 64))
     draw = ImageDraw.Draw(image)
     
-    center_text(draw, "MEMORY", 0, font_small)
+    center_text(draw, "Memory", 0, font_small)
     
-    draw_metric(draw, "RAM", f"{ram:.0f}%", ram, 12)
+    draw_metric(draw, "RAM", f"{ram:.0f}%", ram, 10)
     draw_metric(draw, "DISK", f"{disk:.0f}%", disk, 34)
     
     device.display(image)
@@ -109,7 +118,7 @@ while True:
     image = Image.new("1", (128, 64))
     draw = ImageDraw.Draw(image)
     
-    center_text(draw, "NETWORK", 0, font_small)
+    center_text(draw, "Network", 0, font_small)
     
     center_text(draw, host, 18, font_big)
     center_text(draw, ip, 42, font_small)
