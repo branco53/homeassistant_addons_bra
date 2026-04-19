@@ -1,12 +1,12 @@
 name: "Hello Branco"
-version: "1.0.6"
+version: "1.0.5"
 slug: "hello_branco"
 description: "Test add-on"
 
-startup: services
+startup: application   # 🔥 IMPORTANT CHANGE
 boot: auto
 
-init: false   # 🔥 disables s6 completely
+init: false            # disable s6
 
 arch:
   - aarch64
