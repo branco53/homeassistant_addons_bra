@@ -20,6 +20,6 @@ privileged:
   - SYS_RAWIO
 
 hassio_api: true
-
+host_network: true
 options: {}
 schema: {}
