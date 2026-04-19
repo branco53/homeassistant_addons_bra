@@ -10,6 +10,7 @@ HEADERS = {
 }
 
 import subprocess
+print(subprocess.getoutput("iw dev"))
 
 import time
 import socket
@@ -34,23 +35,41 @@ except:
 def center_text(draw, text, y, font):
     w, h = draw.textbbox((0, 0), text, font=font)[2:]
     draw.text(((128 - w) // 2, y), text, font=font, fill=255)
+import subprocess
+
+def get_wifi_interface():
+    try:
+        output = subprocess.check_output("iw dev", shell=True).decode()
+        for line in output.split("\n"):
+            if "Interface" in line:
+                return line.split()[1]
+    except:
+        return None
+
 
 def get_wifi_signal():
     try:
-        output = subprocess.check_output("iw dev wlan0 link", shell=True).decode()
+        iface = get_wifi_interface()
+
+        if not iface:
+            return 0, "no iface"
+
+        cmd = f"iw dev {iface} link"
+        output = subprocess.check_output(cmd, shell=True).decode()
 
         for line in output.split("\n"):
             if "signal" in line:
-                # example: signal: -55 dBm
                 dbm = int(line.split("signal:")[1].split("dBm")[0].strip())
-                
-                # convert dBm to percentage (approx)
+
+                # Convert dBm → %
                 percent = min(max(2 * (dbm + 100), 0), 100)
                 return percent, f"{dbm} dBm"
 
         return 0, "no signal"
-    except:
-        return 0, "no wifi"
+
+    except Exception as e:
+        return 0, "wifi err"
+
 
 def get_uptime():
     try:
