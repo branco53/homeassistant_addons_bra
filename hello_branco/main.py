@@ -52,23 +52,25 @@ def get_wifi_signal():
         iface = get_wifi_interface()
 
         if not iface:
-            return 0, "no iface"
+            return None  # no wifi hardware
 
         cmd = f"iw dev {iface} link"
         output = subprocess.check_output(cmd, shell=True).decode()
 
+        # KEY CHECK: not connected
+        if "Not connected" in output:
+            return None
+
         for line in output.split("\n"):
             if "signal" in line:
                 dbm = int(line.split("signal:")[1].split("dBm")[0].strip())
-
-                # Convert dBm → %
                 percent = min(max(2 * (dbm + 100), 0), 100)
                 return percent, f"{dbm} dBm"
 
-        return 0, "no signal"
+        return None
 
-    except Exception as e:
-        return 0, "wifi err"
+    except:
+        return None
 
 
 def get_uptime():
@@ -138,7 +140,6 @@ while True:
     disk = psutil.disk_usage('/').percent
     temp = get_temp()
     ip = get_ip()
-   # host = socket.gethostname()
     host = get_host()
 
     # ===== PAGE 1: CPU + TEMP =====
@@ -178,19 +179,22 @@ while True:
     time.sleep(6)
 
     # ===== PAGE 4: WiFi =====    
-    image = Image.new("1", (128, 64))
-    draw = ImageDraw.Draw(image)
+    wifi_data = get_wifi_signal()
     
-    center_text(draw, "WiFi", 0, font_small)
+    if wifi_data:
+        wifi_percent, wifi_text = wifi_data
     
-    wifi_percent, wifi_text = get_wifi_signal()
+        image = Image.new("1", (128, 64))
+        draw = ImageDraw.Draw(image)
     
-    center_text(draw, wifi_text, 18, font_small)
+        center_text(draw, "WIFI", 0, font_small)
     
-    draw_bar(draw, 6, 40, 116, 10, wifi_percent)
+        center_text(draw, wifi_text, 18, font_small)
     
-    device.display(image)
-    time.sleep(6)
+        draw_bar(draw, 6, 40, 116, 10, wifi_percent)
+    
+        device.display(image)
+        time.sleep(6)
 
     # ===== PAGE 5: Uptime ===== 
     image = Image.new("1", (128, 64))
